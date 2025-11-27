@@ -1,0 +1,14 @@
+- name: Configure Kubernetes Nodes
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install monitoring tools
+      apt:
+        name: htop
+        state: present
+
+    - name: Restart kubelet
+      service:
+        name: kubelet
+        state: restarted
