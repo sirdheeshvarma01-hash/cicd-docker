@@ -1,4 +1,4 @@
-name: CI/CD Full Stack Pipeline
+name: CI/CD Frontend Deployment
 
 on:
   push:
@@ -19,18 +19,10 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # Build Backend Image
-    - name: Build Backend Docker Image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest ./backend
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
 
-    - name: Push Backend Image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
-
-    # Build Frontend Image
-    - name: Build Frontend Docker Image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest ./frontend
-
-    - name: Push Frontend Image
+    - name: Push Docker Image
       run: docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
   deploy-to-k8s:
@@ -38,9 +30,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Install kubectl
       run: |
         sudo snap install kubectl --classic
@@ -50,21 +39,6 @@ jobs:
         mkdir -p ~/.kube
         echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
 
-    - name: Apply Kubernetes manifests
-      run: kubectl apply -f k8s/
-
-  ansible-automation:
-    needs: deploy-to-k8s
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Ansible
-      run: sudo apt-get update && sudo apt-get install -y ansible
-
-    - name: Run Ansible Playbook
-      run: ansible-playbook ansible/deploy.yaml --extra-vars "env=prod"
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/
