@@ -1,13 +1,9 @@
-# Dockerfile.frontend
-FROM node:18-alpine AS build
+FROM node:18 AS build
 WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend ./
-RUN npm run build
+COPY . .
+RUN npm install && npm run build
 
 FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-# Optional: add nginx conf if necessary
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
