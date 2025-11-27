@@ -1,4 +1,4 @@
-name: Deploy to Kubernetes
+name: Deploy Kubernetes
 
 on:
   push:
@@ -9,16 +9,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Configure Kubeconfig
-      run: |
-        mkdir -p ~/.kube
-        printf "%s" "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
 
-    - name: Test Kubernetes Connection
-      run: kubectl get nodes
+      - name: Set kube config
+        run: |
+          mkdir -p ~/.kube
+          echo "${KUBE_CONFIG}" > ~/.kube/config
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
 
-    - name: Deploy frontend
-      run: kubectl apply -f k8s/frontend-deployment.yaml
+      - name: Test connection
+        run: kubectl get nodes
+
+      - name: Apply Kubernetes files
+        run: kubectl apply -f k8s/ --validate=false
